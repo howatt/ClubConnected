@@ -165,7 +165,8 @@
                     android:textSize="20dp"
                     android:textStyle="bold"
                     android:clickable="true"
-                    android:enabled="true" />
+                    android:enabled="true"
+                    android:onClick="loginOnClick" />
 
             </LinearLayout>
 

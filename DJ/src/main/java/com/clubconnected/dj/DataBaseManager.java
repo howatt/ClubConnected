@@ -4,6 +4,7 @@ package com.clubconnected.dj;
  * Created by Newd on 4/5/14.
  */
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
@@ -27,24 +28,32 @@ public class DataBaseManager extends SQLiteOpenHelper {
     private static String DB_NAME = "clubConnected";
 
     // database version
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     /**
      * Constructor Takes and keeps a reference of the passed context in order to
      * access to the application assets and resources.
      */
-    public DataBaseManager() {
-        super(ApplicationContextProvider.getContext(), DB_NAME, null, DATABASE_VERSION);
+    public DataBaseManager(Context context) {
+        super(context, DB_NAME, null, DATABASE_VERSION);
     }
 
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+
+        // deleting tables for testing.
+        db.execSQL("DROP TABLE IF EXISTS USER");
+        db.execSQL("DROP TABLE IF EXISTS SONG");
+        db.execSQL("DROP TABLE IF EXISTS MESSAGE");
+
         // SQL statements to create the required tables.
         String CREATE_USERS_TABLE = "CREATE TABLE USER ( " +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "USER_NAME CHAR(15), "+
                 "USER_PASSWORD CHAR(15), "+
+                "USER_FNAME CHAR(15), "+
+                "USER_LNAME CHAR(15), "+
                 "USER_TYPE CHAR(15))";
 
         String CREATE_SONGS_TABLE = "CREATE TABLE SONG ( " +
@@ -66,10 +75,10 @@ public class DataBaseManager extends SQLiteOpenHelper {
         db.execSQL(CREATE_MESSAGES_TABLE);
 
         // now we'll fill them with reasonable data
-        String POPULATE_USERS_TABLE = "INSERT INTO USER(USER_NAME, USER_PASSWORD, USER_TYPE) VALUES(" +
-                "('adam', 'adam', 'admin')" +
-                "('josiah', 'josiah', 'admin')" +
-                "('admin', 'admin', 'admin')";
+        String POPULATE_USERS_TABLE = "INSERT INTO USER(USER_NAME, USER_PASSWORD, USER_FNAME, USER_LNAME, USER_TYPE) VALUES" +
+                "('adam', 'adam', 'Adam', 'Howatt', 'admin')," +
+                "('josiah', 'josiah', 'JoeBags', 'Bernard', 'admin')," +
+                "('admin', 'admin', 'Tech', 'Guru', 'admin')";
 
         db.execSQL(POPULATE_USERS_TABLE);
     }
@@ -95,8 +104,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
      */
     public Cursor select(String query) throws SQLException {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor aC =  db.rawQuery(query, null);
-        return aC;
+        return db.rawQuery(query, null);
     }
 
     /**

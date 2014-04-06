@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.os.Build;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -26,11 +28,13 @@ public class MainActivity extends ActionBarActivity {
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
         }
-        final String sqlQuery = "SELECT * FROM USER";
-        DataBaseManager db = new DataBaseManager();
+
+        // works?
+        /*final String sqlQuery = "SELECT * FROM USER";
+        DataBaseManager db = new DataBaseManager(MainActivity.this);
         Cursor rs = db.select(sqlQuery);
         Button btnRegister = (Button) findViewById(R.id.btnRegister);
-        btnRegister.setText(rs.getCount());
+        btnRegister.setText("Hello " + rs.getCount()); */
 
 
 
@@ -41,6 +45,49 @@ public class MainActivity extends ActionBarActivity {
         // when the registration button is clicked
         Button b = (Button) v;
         startActivity(new Intent(MainActivity.this, RegistrationActivity.class));
+
+    }
+
+    public void loginOnClick(View v) {
+        Button btnLogin = (Button) v;
+        EditText txtUsername = (EditText) findViewById(R.id.txtUsername);
+        EditText txtPassword = (EditText) findViewById(R.id.txtPassword);
+
+        String username = txtUsername.getText().toString();
+        String password = txtPassword.getText().toString();
+        Boolean hasError = false;
+
+        // make sure fields aren't blank.
+        if (username.equals("") || password.equals("")) {
+            Toast.makeText(MainActivity.this, "You are missing some data. Try again.", Toast.LENGTH_SHORT).show();
+            hasError = true;
+        }
+
+        // if an error hasn't been set, query the DB with the user & pass.
+        if (!hasError) {
+            final String sqlQuery = "SELECT * FROM USER WHERE USER_NAME = '" + username + "' AND USER_PASSWORD = '" + password + "'";
+            DataBaseManager db = new DataBaseManager(MainActivity.this);
+            Cursor rs = db.select(sqlQuery);
+
+            if (rs.getCount() == 0) {
+                Toast.makeText(MainActivity.this, "Invalid Username and/or Password. Try again.", Toast.LENGTH_SHORT).show();
+                hasError = true;
+            } else {
+                if (rs.moveToFirst()) {
+                    String fname = rs.getString(rs.getColumnIndex("USER_FNAME"));
+                    String lname = rs.getString(rs.getColumnIndex("USER_FNAME"));
+
+                }
+
+            }
+
+
+
+        }
+
+
+
+
 
     }
 

@@ -1,6 +1,8 @@
 package com.clubconnected.dj;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
@@ -20,6 +22,7 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // this is some magic that i can't remove
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -28,31 +31,26 @@ public class MainActivity extends ActionBarActivity {
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
         }
-
-        // works?
-        /*final String sqlQuery = "SELECT * FROM USER";
-        DataBaseManager db = new DataBaseManager(MainActivity.this);
-        Cursor rs = db.select(sqlQuery);
-        Button btnRegister = (Button) findViewById(R.id.btnRegister);
-        btnRegister.setText("Hello " + rs.getCount()); */
-
-
-
+        // end magic
 
     }
 
+    // onclick listener for the registration button.
     public void registrationOnClick(View v) {
-        // when the registration button is clicked
-        Button b = (Button) v;
+        // when the registration button is clicked, redirect to registration page.
         startActivity(new Intent(MainActivity.this, RegistrationActivity.class));
 
     }
 
+    // onclick listener for the login button.
     public void loginOnClick(View v) {
+
+        // get any buttons or views tha twe may need.
         Button btnLogin = (Button) v;
         EditText txtUsername = (EditText) findViewById(R.id.txtUsername);
         EditText txtPassword = (EditText) findViewById(R.id.txtPassword);
 
+        // get the username and password entered. getText().toString(), really?
         String username = txtUsername.getText().toString();
         String password = txtPassword.getText().toString();
         Boolean hasError = false;
@@ -65,17 +63,42 @@ public class MainActivity extends ActionBarActivity {
 
         // if an error hasn't been set, query the DB with the user & pass.
         if (!hasError) {
+
+            // construct query
             final String sqlQuery = "SELECT * FROM USER WHERE USER_NAME = '" + username + "' AND USER_PASSWORD = '" + password + "'";
-            DataBaseManager db = new DataBaseManager(MainActivity.this);
+
+            // get database connection via singleton pattern
+            DataBaseManager db = DataBaseManager.instance(MainActivity.this);
+
+            // perform the query, returning a cursor to the results
             Cursor rs = db.select(sqlQuery);
 
-            if (rs.getCount() == 0) {
+            // if the cursor is still null (issue with DB) or 0 rows were returned.
+            if (rs == null || rs.getCount() == 0) {
+                // show a toast & set an error flag
                 Toast.makeText(MainActivity.this, "Invalid Username and/or Password. Try again.", Toast.LENGTH_SHORT).show();
                 hasError = true;
             } else {
                 if (rs.moveToFirst()) {
+                    // get the data from the row returned and save in application scope (private preferences)
+                    SharedPreferences prefs = this.getSharedPreferences(
+                            "com.clubconnected.dj", Context.MODE_PRIVATE);
+
+                    // get the  necessary data from the cursor
                     String fname = rs.getString(rs.getColumnIndex("USER_FNAME"));
                     String lname = rs.getString(rs.getColumnIndex("USER_FNAME"));
+                    String aUsername = rs.getString(rs.getColumnIndex("USER_NAME"));
+                    Long id = rs.getLong(rs.getColumnIndex("_id"));
+
+                    // put all the data into the preferences
+                    prefs.edit().putString("FNAME", fname).commit();
+                    prefs.edit().putString("LNAME", lname).commit();
+                    prefs.edit().putString("USERNAME", aUsername).commit();
+                    prefs.edit().putLong("ID", id).commit();
+
+                    // now redirect
+                    startActivity(new Intent(MainActivity.this, SongActivity.class));
+
 
                 }
 
@@ -113,6 +136,7 @@ public class MainActivity extends ActionBarActivity {
 
     /**
      * A placeholder fragment containing a simple view.
+     * no magic happens here; however, don't remove it or the app breaks.
      */
     public static class PlaceholderFragment extends Fragment {
 

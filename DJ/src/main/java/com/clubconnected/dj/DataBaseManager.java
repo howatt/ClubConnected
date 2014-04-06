@@ -27,16 +27,31 @@ public class DataBaseManager extends SQLiteOpenHelper {
     //the name of your database
     private static String DB_NAME = "clubConnected";
 
+    private static DataBaseManager sInstance;
     // database version
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 4;
 
     /**
      * Constructor Takes and keeps a reference of the passed context in order to
      * access to the application assets and resources.
      */
-    public DataBaseManager(Context context) {
+    private DataBaseManager(Context context) {
         super(context, DB_NAME, null, DATABASE_VERSION);
     }
+
+    /**
+     * Singleton for DataBase
+     *
+     * @return singleton instance
+     */
+    public static DataBaseManager instance(Context context) {
+
+        if (sInstance == null) {
+            sInstance = new DataBaseManager(context);
+        }
+        return sInstance;
+    }
+
 
 
     @Override
@@ -50,7 +65,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
         // SQL statements to create the required tables.
         String CREATE_USERS_TABLE = "CREATE TABLE USER ( " +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "USER_NAME CHAR(15), "+
+                "USER_NAME CHAR(15) UNIQUE, "+
                 "USER_PASSWORD CHAR(15), "+
                 "USER_FNAME CHAR(15), "+
                 "USER_LNAME CHAR(15), "+
@@ -114,9 +129,9 @@ public class DataBaseManager extends SQLiteOpenHelper {
      * @param values values to insert
      * @throws android.database.SQLException sql exception
      */
-    public void insert(String table, ContentValues values) throws SQLException {
-        SQLiteDatabase db = this.getReadableDatabase();
-        db.insert(table, null, values);
+    public long insert(String table, ContentValues values) throws SQLException {
+        SQLiteDatabase db = this.getWritableDatabase();
+         return db.insert(table, null, values);
     }
 
     /**
@@ -127,7 +142,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
      * @throws android.database.SQLException sql exception
      */
     public void delete(String table, String where) throws SQLException {
-        SQLiteDatabase db = this.getReadableDatabase();
+        SQLiteDatabase db = this.getWritableDatabase();
         db.delete(table, where, null);
 
     }
@@ -140,7 +155,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
      * @param where  - WHERE clause, if pass null, all rows will be updated
      */
     public void update(String table, ContentValues values, String where) {
-        SQLiteDatabase db = this.getReadableDatabase();
+        SQLiteDatabase db = this.getWritableDatabase();
         db.update(table, values, where, null);
 
     }
@@ -151,7 +166,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
      * @param command - the sql comand you want to run
      */
     public void sqlCommand(String command) {
-        SQLiteDatabase db = this.getReadableDatabase();
+        SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL(command);
     }
 

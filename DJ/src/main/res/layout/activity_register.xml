@@ -2,11 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/backrepeat">
+    android:background="@drawable/backrepeat"
+    android:layout_height="fill_parent">
 
     <ScrollView
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:id="@+id/scrollView" >
 
@@ -230,7 +230,8 @@
                 android:orientation="horizontal"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/linearLayout5">
+                android:id="@+id/linearLayout5"
+                android:baselineAligned="false">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -256,7 +257,8 @@
                     android:focusableInTouchMode="true"
                     android:focusable="true"
                     android:spinnersShown="true"
-                    android:startYear="1990" />
+                    android:startYear="1950"
+                    android:visibility="visible" />
 
             </LinearLayout>
 

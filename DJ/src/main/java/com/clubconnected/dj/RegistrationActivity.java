@@ -1,7 +1,16 @@
 package com.clubconnected.dj;
 
-import android.content.Intent;
-import android.database.Cursor;
+/**
+ * Created by Newd on 4/5/14.
+ */
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
+import android.view.Menu;
+import android.view.MenuItem;
+
+
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -12,41 +21,25 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.os.Build;
-import android.widget.Button;
 
-public class MainActivity extends ActionBarActivity {
+public class RegistrationActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_register);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
         }
-        final String sqlQuery = "SELECT * FROM USER";
-        DataBaseManager db = new DataBaseManager();
-        Cursor rs = db.select(sqlQuery);
-        Button btnRegister = (Button) findViewById(R.id.btnRegister);
-        btnRegister.setText(rs.getCount());
-
-
-
-
     }
 
-    public void registrationOnClick(View v) {
-        // when the registration button is clicked
-        Button b = (Button) v;
-        startActivity(new Intent(MainActivity.this, RegistrationActivity.class));
-
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;

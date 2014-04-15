@@ -29,7 +29,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
 
     private static DataBaseManager sInstance;
     // database version
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     /**
      * Constructor Takes and keeps a reference of the passed context in order to
@@ -96,6 +96,23 @@ public class DataBaseManager extends SQLiteOpenHelper {
                 "('admin', 'admin', 'Tech', 'Guru', 'admin')";
 
         db.execSQL(POPULATE_USERS_TABLE);
+
+        String POPULATE_SONGS_TABLE = "INSERT INTO SONG(SONG_NAME, SONG_ARTIST, SONG_GENRE, SONG_PLAYS) VALUES" +
+                "('MM-Bop', 'Hansen', 'Pop', 0)," +
+                "('Flight of Icarus', 'Iron Maiden', 'Metal', 0)," +
+                "('Sultans of Swing', 'Dire Straights', 'Rock', 0)," +
+                "('Alive', 'Meatloaf', 'Rock', 0)," +
+                "('Monster is Loose', 'Meatloaf', 'Rock', 0)," +
+                "('Bohemian Rhapsody', 'Queen', 'Rock', 0)," +
+                "('Where the Rubber meets the road', 'Meatloaf', 'Rock', 0)," +
+                "('Strawberry fields forever', 'Beatles', 'Rock', 0)," +
+                "('Waiting for the worms', 'Pink Floyd', 'Rock', 0)," +
+                "('The Wait', 'The Band', 'Rock', 0)," +
+                "('My Milkshake', 'Kelis', 'Neo Soul', 0)," +
+                "('Never gonna give you up', 'Rick Astley', 'Pop', 0)," +
+                "('Cosmik Debris', 'Frank Zappa', 'Experimental', 0)";
+
+        db.execSQL(POPULATE_SONGS_TABLE);
     }
 
 

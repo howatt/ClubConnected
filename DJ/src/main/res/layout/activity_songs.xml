@@ -21,7 +21,8 @@
             android:paddingRight="20dp"
             android:paddingLeft="5dp"
             android:paddingTop="10dp"
-            android:paddingBottom="10dp" />
+            android:paddingBottom="10dp"
+            android:queryHint="Song/Artist/Genre" />
 
         <LinearLayout
             android:orientation="horizontal"
@@ -35,42 +36,45 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Song"
-                android:id="@+id/textView"
-                android:layout_weight="1" />
+                android:id="@+id/songHeading"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:onClick="sortSongs"
+                android:clickable="true" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Artist"
-                android:id="@+id/textView2"
-                android:layout_weight="1" />
+                android:id="@+id/artistHeading"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:onClick="sortSongs"
+                android:clickable="true" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Genre"
-                android:id="@+id/textView3"
-                android:layout_weight="1" />
+                android:id="@+id/genreHeading"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:onClick="sortSongs"
+                android:clickable="true" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:text="# Requests"
-                android:id="@+id/textView4"
-                android:layout_weight="0.2" />
         </LinearLayout>
 
         <ListView
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:id="@+id/listView"
-            android:entries="@array/sports_array"
-            android:headerDividersEnabled="true"
+            android:headerDividersEnabled="false"
             android:layout_marginLeft="15dp"
-            android:layout_marginRight="15dp" />
+            android:layout_marginRight="15dp"
+            android:layout_marginBottom="20dp"
+            android:paddingBottom="25dp" />
 
     </LinearLayout>
 
@@ -78,7 +82,7 @@
         android:layout_width="fill_parent"
         android:layout_height="55dp"
         android:layout_gravity="bottom"
-        android:background="#fff693">
+        android:background="@drawable/bottombg">
 
     </RelativeLayout>
 

@@ -82,8 +82,23 @@
         android:layout_width="fill_parent"
         android:layout_height="55dp"
         android:layout_gravity="bottom"
-        android:background="@drawable/bottombg">
+        android:background="@drawable/bottombg2">
 
+        <Button
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="DJ SHOUTOUT"
+            android:id="@+id/button"
+            android:layout_centerHorizontal="true"
+            android:typeface="monospace"
+            android:layout_marginLeft="110dp"
+            android:layout_marginRight="70dp"
+            android:textSize="25dp"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:enabled="true"
+            android:background="@drawable/loginback"
+            android:onClick="shoutoutClick" />
     </RelativeLayout>
 
 </FrameLayout>

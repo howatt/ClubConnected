@@ -29,7 +29,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
 
     private static DataBaseManager sInstance;
     // database version
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
 
     /**
      * Constructor Takes and keeps a reference of the passed context in order to
@@ -81,13 +81,21 @@ public class DataBaseManager extends SQLiteOpenHelper {
         String CREATE_MESSAGES_TABLE = "CREATE TABLE MESSAGE ( " +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "MESSAGE_CONTENT CHAR(254), "+
-                "MESSAGE_FROM CHAR(15), "+
-                "MESSAGE_READ BOOLEAN)";
+                "USER_ID INTEGER, "+
+                "MESSAGE_READ BOOLEAN default 0, " +
+                "MESSAGE_DATE datetime default current_timestamp)";
+
+        String CREATE_REQUESTS_TABLE = "CREATE TABLE REQUEST ( " +
+                "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "SONG_ID INTEGER, "+
+                "REQUEST_DATE datetime default current_timestamp, "+
+                "USER_ID INTEGER)";
 
         // create the tables
         db.execSQL(CREATE_USERS_TABLE);
         db.execSQL(CREATE_SONGS_TABLE);
         db.execSQL(CREATE_MESSAGES_TABLE);
+        db.execSQL(CREATE_REQUESTS_TABLE);
 
         // now we'll fill them with reasonable data
         String POPULATE_USERS_TABLE = "INSERT INTO USER(USER_NAME, USER_PASSWORD, USER_FNAME, USER_LNAME, USER_TYPE) VALUES" +
@@ -122,6 +130,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS USER");
         db.execSQL("DROP TABLE IF EXISTS SONG");
         db.execSQL("DROP TABLE IF EXISTS MESSAGE");
+        db.execSQL("DROP TABLE IF EXISTS REQUEST");
 
         // create fresh tables
         this.onCreate(db);

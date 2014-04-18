@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
-import android.text.InputType;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,6 +16,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
+import com.clubconnected.dj.Models.Message;
 
 /**
  * Created by Newd on 4/6/14.
@@ -149,7 +149,9 @@ public class SongActivity  extends ActionBarActivity {
         // get db conn
         DataBaseManager db = DataBaseManager.instance(SongActivity.this);
 
-        // generate query
+        // generate query, allow the user to search by song name, artist, or genre.
+        // Unfortunately, this query doesn't provide reasonable "relevancy" as opposed to a full-text index.
+        // however, it is more than suitable for a basic interface such as this.
         String sqlQuery = "SELECT * FROM SONG WHERE SONG_NAME LIKE '%" + searchTerm + "%' OR " +
                 "SONG_ARTIST LIKE '%" + searchTerm + "%' OR " +
                 "SONG_GENRE LIKE '%" + searchTerm + "%' " +

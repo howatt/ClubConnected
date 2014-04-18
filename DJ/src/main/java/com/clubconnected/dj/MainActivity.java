@@ -1,24 +1,40 @@
 package com.clubconnected.dj;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
+import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.os.Build;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.clubconnected.dj.Models.User;
+import com.clubconnected.dj.Network.httpHandler;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+/**
+ * MainActivity
+ * The launch screen for the club connected app
+ * User must log in on this screen, or select the registration button to move forward.
+ */
 public class MainActivity extends ActionBarActivity {
+    ProgressDialog pDialog;
+    httpHandler myHandler;
+    String MAIN_URL = "http://www.tutlezone.com/dj/usercheck.php?";
+    String url;
+
+    // JSON Node names
+    private static final String TAG_USERNAME = "USERNAME";
+    private static final String TAG_USER_FNAME = "USER_FNAME";
+    private static final String TAG_USER_LNAME = "USER_LNAME";
+    private static final String TAG_USER_ID = "USER_ID";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +48,7 @@ public class MainActivity extends ActionBarActivity {
                     .commit();
         }
         // end magic
+
 
     }
 
@@ -53,66 +70,47 @@ public class MainActivity extends ActionBarActivity {
         // get the username and password entered. getText().toString(), really?
         String username = txtUsername.getText().toString();
         String password = txtPassword.getText().toString();
-        Boolean hasError = false;
-
-        // make sure fields aren't blank.
-        if (username.equals("") || password.equals("")) {
-            Toast.makeText(MainActivity.this, "You are missing some data. Try again.", Toast.LENGTH_SHORT).show();
-            hasError = true;
-        }
-
-        // if an error hasn't been set, query the DB with the user & pass.
-        if (!hasError) {
-
-            // construct query
-            final String sqlQuery = "SELECT * FROM USER WHERE USER_NAME = '" + username + "' AND USER_PASSWORD = '" + password + "'";
-
-            // get database connection via singleton pattern
-            DataBaseManager db = DataBaseManager.instance(MainActivity.this);
-
-            // perform the query, returning a cursor to the results
-            Cursor rs = db.select(sqlQuery);
-
-            // if the cursor is still null (issue with DB) or 0 rows were returned.
-            if (rs == null || rs.getCount() == 0) {
-                // show a toast & set an error flag
-                Toast.makeText(MainActivity.this, "Invalid Username and/or Password. Try again.", Toast.LENGTH_SHORT).show();
-                hasError = true;
-            } else {
-                if (rs.moveToFirst()) {
-                    // get the data from the row returned and save in application scope (private preferences)
-                    SharedPreferences prefs = this.getSharedPreferences(
-                            "com.clubconnected.dj", Context.MODE_PRIVATE);
-
-                    // get the  necessary data from the cursor
-                    String fname = rs.getString(rs.getColumnIndex("USER_FNAME"));
-                    String lname = rs.getString(rs.getColumnIndex("USER_FNAME"));
-                    String aUsername = rs.getString(rs.getColumnIndex("USER_NAME"));
-                    Long id = rs.getLong(rs.getColumnIndex("_id"));
-
-                    // put all the data into the preferences
-                    prefs.edit().putString("FNAME", fname).commit();
-                    prefs.edit().putString("LNAME", lname).commit();
-                    prefs.edit().putString("USERNAME", aUsername).commit();
-                    prefs.edit().putLong("ID", id).commit();
-
-                    // now redirect
-                    startActivity(new Intent(MainActivity.this, SongActivity.class));
 
 
-                }
-
-            }
-
-
-
-        }
-
-
-
-
+        // validate credentials
+         if (User.validateCredentials(username, password, MainActivity.this)) {
+             // if valid, formulate URL & execute HTTP request (async)
+             url = MAIN_URL + "username=" + username + "&password=" + password;
+             new LoginCheck().execute();
+           } else {
+             // if invalid credentials, show toast.
+             Toast.makeText(MainActivity.this, "Invalid Username and/or Password. Try again.", Toast.LENGTH_SHORT).show();
+         }
 
     }
+
+    // called from within the async task
+    // checks the JSON result to see data is available, stores said data within the preferences, and redirects to the song page.
+    private void processLoginAttempt() {
+        try {
+            // returned as an array, turn that array into an object (only accepting 1 row)
+            JSONArray jsonArr = myHandler.getJsonArray();
+            JSONObject json = jsonArr.getJSONObject(0);
+
+            // grab data from the json string (throws exception if unavailable.
+            Long userid = json.getLong(TAG_USER_ID);
+            String user_fname = json.getString(TAG_USER_FNAME);
+            String user_lname = json.getString(TAG_USER_LNAME);
+            String username = json.getString(TAG_USERNAME);
+            // add the data to preference scope.
+            User.saveUserToScope(user_fname, user_lname, username, userid, MainActivity.this);
+
+            // redirect to song page.
+            startActivity(new Intent(MainActivity.this, SongActivity.class));
+        }
+        catch (Exception e) {
+            // print errors & show toast for failure if exception is caught (invalid data, no json data, etc)
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this, "Login Failed", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -151,4 +149,48 @@ public class MainActivity extends ActionBarActivity {
         } */
     }
 
+    // inner class to check the login against the database.
+    // only way to perform http requests is on a background thread.
+    class LoginCheck extends AsyncTask<String, String, String> {
+
+
+        /**
+         * Before starting background thread Show Progress Dialog
+         * */
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            pDialog = new ProgressDialog(MainActivity.this);
+            pDialog.setMessage("Verifying your credentials");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+
+        /**
+         * contact the website using the http handler
+         * */
+        protected String doInBackground(String... args) {
+
+            myHandler = new httpHandler(url);
+
+            return null;
+        }
+
+        /**
+         * After completing the background task Dismiss the progress dialog & show a toast
+         * **/
+        protected void onPostExecute(String file_url) {
+            // dismiss the dialog after getting all announcements
+            pDialog.dismiss();
+
+            // have the page attempt to process the returned json data.
+            processLoginAttempt();
+
+        }
+
+    }
 }
+
+

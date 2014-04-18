@@ -1,9 +1,5 @@
 package com.clubconnected.dj;
 
-/**
- * Created by Newd on 4/5/14.
- */
-
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -22,6 +18,11 @@ import com.clubconnected.dj.Models.User;
 import com.clubconnected.dj.Network.httpHandler;
 import java.util.Calendar;
 
+/**
+ * RegistrationActivity
+ * A form allowing users to register
+ * Upon successful registration, user is redirected to the song listing page.
+ */
 public class RegistrationActivity extends ActionBarActivity {
 
     ProgressDialog pDialog;
@@ -44,25 +45,29 @@ public class RegistrationActivity extends ActionBarActivity {
 
     // onclick listener for the register button.
     public void registerOnClick(View v) {
+
+        // grab the views we might need
         EditText txtFname = (EditText) findViewById(R.id.txtFname);
         EditText txtLname = (EditText) findViewById(R.id.txtLname);
         EditText txtEmail = (EditText) findViewById(R.id.txtEmail);
         EditText txtPassword = (EditText) findViewById(R.id.txtPassword);
         DatePicker dateDOB = (DatePicker) findViewById(R.id.DOB);
 
+        // convert those views into data types.
         String fname = txtFname.getText().toString();
         String lname = txtLname.getText().toString();
         String email = txtEmail.getText().toString();
         String password = txtPassword.getText().toString();
 
+        // calendar object for the datepicker, so we can determine age.
         int day = dateDOB.getDayOfMonth();
         int month = dateDOB.getMonth();
         int year =  dateDOB.getYear();
-
         Calendar dob = Calendar.getInstance();
         dob.set(year, month, day);
 
 
+        // create a new user with the entered details
         thisUser = new User(email, password, fname, lname, dob, RegistrationActivity.this);
 
         // if any errors were found, we'll generate a formatted error string from the array list.
@@ -83,7 +88,8 @@ public class RegistrationActivity extends ActionBarActivity {
             confirm.show();
 
         }
-        else {
+        else { // no errors.
+            // construct a URL & submit a get request to that URL
             url = MAIN_URL + "email=" + email + "&password=" + password + "&fname=" + fname + "&lname=" + lname;
             new Register().execute();
 
@@ -95,11 +101,14 @@ public class RegistrationActivity extends ActionBarActivity {
     private void processRegistrationAttempt() {
         try {
 
+            // grab the raw data
             String httpResponse = myHandler.getRawData();
 
+            // if it's empty or it equals failure strings, show an error.
             if (httpResponse.isEmpty() || httpResponse.equals("failure") || httpResponse.equals("invalid")) {
                 Toast.makeText(RegistrationActivity.this, "Registration Failed . Did you fill out all the fields?", Toast.LENGTH_SHORT).show();
             } else {
+                // otherwise, parse the user ID from the response & save user preferences to scope.
                 Long userID = Long.parseLong(httpResponse.trim());
                 User.saveUserToScope(thisUser.getFirstName(), thisUser.getLastName(), thisUser.getUsername(), userID, RegistrationActivity.this);
 

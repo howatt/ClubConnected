@@ -1,13 +1,16 @@
 package com.clubconnected.dj;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,9 +20,16 @@ import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
 import com.clubconnected.dj.Models.Message;
+import com.clubconnected.dj.Models.User;
+import com.clubconnected.dj.Network.httpHandler;
 
 /**
- * Created by Newd on 4/6/14.
+ * SongActivity
+ * This page is where most of the work happens.
+ * Presents a list of songs for the user to select from, user can submit song requests
+ * User can also use the message button at the bottom to submit messages to the DJ.
+ * This data is all stored on the web database, so the DJ can access it through an admin page.
+ * Searching is provided (to search through the song list) as is sorting, by tapping on a heading.
  */
 public class SongActivity  extends ActionBarActivity {
     // class level variables for searching & ordering.
@@ -30,6 +40,12 @@ public class SongActivity  extends ActionBarActivity {
     private final String[] fromColumns = {"_id", "SONG_NAME" ,"SONG_ARTIST","SONG_GENRE"};
     private final int[] toViews = {R.id.song_id, R.id.song_name, R.id.song_artist, R.id.song_genre};
     private CustomCursorAdapter adapter;
+
+    private Message thisMessage;
+    ProgressDialog pDialog;
+    httpHandler myHandler;
+    String MAIN_URL = "http://www.tutlezone.com/dj/insertMessage.php?";
+    String url;
 
 
     @Override
@@ -164,6 +180,50 @@ public class SongActivity  extends ActionBarActivity {
         adapter.changeCursor(rs);
     }
 
+
+    // inner class to register the user to the database
+    // only way to perform http requests is on a background thread.
+    class InsertMessage extends AsyncTask<String, String, String> {
+
+
+        /**
+         * Before starting background thread Show Progress Dialog
+         * */
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            pDialog = new ProgressDialog(SongActivity.this);
+            pDialog.setMessage("Inserting Your Message");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+
+        /**
+         * contact the website using the http handler
+         * */
+        protected String doInBackground(String... args) {
+
+            myHandler = new httpHandler(url);
+
+            return null;
+        }
+
+        /**
+         * After completing the background task Dismiss the progress dialog & show a toast
+         * **/
+        protected void onPostExecute(String file_url) {
+            // dismiss the dialog after getting all announcements
+            pDialog.dismiss();
+
+            // have the page attempt to process the returned json data.
+            processMessageAttempt();
+
+        }
+
+    }
+
     // when the user taps the shoutout button, show a dialog form allowing for user entry.
     public void shoutoutClick(View v) {
 
@@ -191,14 +251,11 @@ public class SongActivity  extends ActionBarActivity {
                         Long userID = prefs.getLong("ID", 0);
                         String userMessage = input.getText().toString(); // get the message from the programatically added editText
 
-                        Message thisMessage = new Message(userID, userMessage, SongActivity.this);
+                        thisMessage = new Message(userID, userMessage, SongActivity.this);
 
-                        if (thisMessage.saveToLocalDB()) {
-                            Toast.makeText(SongActivity.this, "Message #" + thisMessage.getMessageID() + " was submitted successfully!", Toast.LENGTH_LONG).show();
-                        } else {
-                            Toast.makeText(SongActivity.this, "Your message could not be processed! try again later.", Toast.LENGTH_LONG).show();
-                        }
-
+                        // construct a URL & submit a get request to that URL
+                        url = MAIN_URL + "user_id=" + userID + "&user_message=" + userMessage;
+                        new InsertMessage().execute();
 
                     }
                 })
@@ -213,6 +270,28 @@ public class SongActivity  extends ActionBarActivity {
 
                confirm.show();
 
+    }
+
+    private void processMessageAttempt() {
+        try {
+
+            // grab the raw data
+            String httpResponse = myHandler.getRawData();
+
+            // if it's empty or it equals failure strings, show an error.
+            if (httpResponse.isEmpty() || httpResponse.equals("failure") || httpResponse.equals("invalid")) {
+                Toast.makeText(SongActivity.this, "Insert Message Failed... are you connected to the internet?", Toast.LENGTH_SHORT).show();
+            } else {
+                // otherwise, parse the user ID from the response & save user preferences to scope.
+                Long messageID = Long.parseLong(httpResponse.trim());
+                Toast.makeText(SongActivity.this, "Message #" + messageID + " was submitted successfully!", Toast.LENGTH_LONG).show();
+            }
+        }
+        catch (Exception e) {
+            // print errors & show toast for failure if exception is caught (invalid data, no json data, etc)
+            Log.e("Exception", e.getMessage());
+            Toast.makeText(SongActivity.this, "Insert Message Failed...", Toast.LENGTH_SHORT).show();
+        }
     }
     /**
      * A placeholder fragment containing a simple view.
@@ -230,5 +309,7 @@ public class SongActivity  extends ActionBarActivity {
             //return rootView;
         } */
     }
+
+
 
 }

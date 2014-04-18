@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.clubconnected.dj.Models.Request;
+import com.clubconnected.dj.Network.httpHandler;
 
 /**
  * Created by Howatt on 2/28/14.
@@ -20,9 +22,14 @@ import com.clubconnected.dj.Models.Request;
 public class CustomCursorAdapter extends CursorAdapter {
 
     private LayoutInflater mInflater;
+    String MAIN_URL = "http://www.tutlezone.com/dj/insertRequest.php?";
+    String url;
+    private Context context;
+    private httpHandler myHandler;
 
-    public CustomCursorAdapter(Context context, Cursor c) {
-        super(context, c);
+    public CustomCursorAdapter(Context contextIn, Cursor c) {
+        super(contextIn, c);
+        context = contextIn;
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -67,11 +74,9 @@ public class CustomCursorAdapter extends CursorAdapter {
 
                                 Request thisRequest = new Request(userID, songID, context1);
 
-                                if (thisRequest.saveToLocalDB()) {
-                                    Toast.makeText(context1, "Song Request #" + thisRequest.getRequestID() + " was submitted successfully!", Toast.LENGTH_LONG).show();
-                                } else {
-                                    Toast.makeText(context1, "Your request could not be processed! try again later.", Toast.LENGTH_LONG).show();
-                                }
+                                // construct a URL & submit a get request to that URL
+                                url = MAIN_URL + "user_id=" + userID + "&song_id=" + songID;
+                                new InsertMessage().execute();
 
 
                             }
@@ -103,6 +108,46 @@ public class CustomCursorAdapter extends CursorAdapter {
 
     }
 
+    // inner class to register the user to the database
+    // only way to perform http requests is on a background thread.
+    class InsertMessage extends AsyncTask<String, String, String> {
+
+
+        /**
+         * contact the website using the http handler
+         * */
+        protected String doInBackground(String... args) {
+
+            myHandler = new httpHandler(url);
+
+            return null;
+        }
+
+        /**
+         * After completing the background task Dismiss the progress dialog & show a toast
+         * **/
+        protected void onPostExecute(String file_url) {
+            // have the page attempt to process the returned json data.
+            try {
+
+                // grab the raw data
+                String httpResponse = myHandler.getRawData();
+
+                // if it's empty or it equals failure strings, show an error.
+                if (httpResponse.isEmpty() || httpResponse.equals("failure") || httpResponse.equals("invalid")) {
+                    Toast.makeText(context, "Song Request Failed to send..", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(context, "Song Request # " + httpResponse.trim() + " submitted successfully!", Toast.LENGTH_SHORT).show();
+                }
+            }
+            catch (Exception e) {
+                Toast.makeText(context, "Song Request Failed!", Toast.LENGTH_SHORT).show();
+            }
+
+
+        }
+
+    }
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
         return mInflater.inflate(R.layout.activity_listview, parent, false);

@@ -10,6 +10,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -57,12 +58,13 @@ public class DataBaseManager extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
 
-        // deleting tables for testing.
+        // deleting tables for whatever reason if they happen to exist
         db.execSQL("DROP TABLE IF EXISTS USER");
         db.execSQL("DROP TABLE IF EXISTS SONG");
         db.execSQL("DROP TABLE IF EXISTS MESSAGE");
 
         // SQL statements to create the required tables.
+        /* NO LONGER USED 04/18/2014
         String CREATE_USERS_TABLE = "CREATE TABLE USER ( " +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "USER_NAME CHAR(15) UNIQUE, "+
@@ -70,7 +72,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
                 "USER_FNAME CHAR(15), "+
                 "USER_LNAME CHAR(15), "+
                 "USER_TYPE CHAR(15))";
-
+         */
         String CREATE_SONGS_TABLE = "CREATE TABLE SONG ( " +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "SONG_NAME CHAR(15), "+
@@ -78,6 +80,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
                 "SONG_GENRE CHAR(15), "+
                 "SONG_PLAYS INTEGER)";
 
+        /* NO LONGER USED 18/04/2014
         String CREATE_MESSAGES_TABLE = "CREATE TABLE MESSAGE ( " +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "MESSAGE_CONTENT CHAR(254), "+
@@ -90,13 +93,16 @@ public class DataBaseManager extends SQLiteOpenHelper {
                 "SONG_ID INTEGER, "+
                 "REQUEST_DATE datetime default current_timestamp, "+
                 "USER_ID INTEGER)";
-
+       */
         // create the tables
-        db.execSQL(CREATE_USERS_TABLE);
         db.execSQL(CREATE_SONGS_TABLE);
+        /* NO LONGER USED 18/04/2014
+        db.execSQL(CREATE_USERS_TABLE);
         db.execSQL(CREATE_MESSAGES_TABLE);
         db.execSQL(CREATE_REQUESTS_TABLE);
+        */
 
+        /* NO LONGER USED 18/04/2014
         // now we'll fill them with reasonable data
         String POPULATE_USERS_TABLE = "INSERT INTO USER(USER_NAME, USER_PASSWORD, USER_FNAME, USER_LNAME, USER_TYPE) VALUES" +
                 "('adam', 'adam', 'Adam', 'Howatt', 'admin')," +
@@ -104,6 +110,7 @@ public class DataBaseManager extends SQLiteOpenHelper {
                 "('admin', 'admin', 'Tech', 'Guru', 'admin')";
 
         db.execSQL(POPULATE_USERS_TABLE);
+        */
 
         String POPULATE_SONGS_TABLE = "INSERT INTO SONG(SONG_NAME, SONG_ARTIST, SONG_GENRE, SONG_PLAYS) VALUES" +
                 "('MM-Bop', 'Hansen', 'Pop', 0)," +
@@ -135,6 +142,19 @@ public class DataBaseManager extends SQLiteOpenHelper {
         // create fresh tables
         this.onCreate(db);
     }
+
+    public boolean compareToDB(String checkSum) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor rs = db.rawQuery("SELECT GROUP_CONCAT(SUBSTR(SONG_NAME, 2, 3 )) as checksum FROM SONG ORDER BY _id", null);
+        if (rs.moveToFirst() && rs.getString(0).equals(checkSum)) {
+            return true;
+        } else {
+            Log.e("checksum", rs.getString(0));
+            db.execSQL("DELETE FROM SONG");
+            return false;
+        }
+    }
+
 
     /**
      * Select method

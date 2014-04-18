@@ -2,6 +2,7 @@ package com.clubconnected.dj;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -20,8 +21,10 @@ import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
 import com.clubconnected.dj.Models.Message;
-import com.clubconnected.dj.Models.User;
 import com.clubconnected.dj.Network.httpHandler;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * SongActivity
@@ -47,6 +50,12 @@ public class SongActivity  extends ActionBarActivity {
     String MAIN_URL = "http://www.tutlezone.com/dj/insertMessage.php?";
     String url;
 
+    // JSON Node names
+    private static final String TAG_SONG_ID = "_id";
+    private static final String TAG_SONG_NAME = "SONG_NAME";
+    private static final String TAG_SONG_ARTIST = "SONG_ARTIST";
+    private static final String TAG_SONG_GENRE = "SONG_GENRE";
+    private static final String TAG_SONG_PLAYS = "SONG_PLAYS";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,17 +70,8 @@ public class SongActivity  extends ActionBarActivity {
         }
         // end magic
 
-        // query, returning a cursor
-        final String sqlQuery = "SELECT * FROM SONG ORDER BY SONG_NAME ASC";
-        DataBaseManager db = DataBaseManager.instance(SongActivity.this);
-        Cursor rs = db.select(sqlQuery);
-
-        // create a new custom cursor adapter, attaching the result set to the adapter.
-        adapter = new CustomCursorAdapter(this,rs);
-
-        // attach the adapter to the listview to show the results.
-        ListView listView = (ListView) findViewById(R.id.listView);
-        listView.setAdapter(adapter);
+        // execute the async task to download, compare and show the song list.
+        new CompareSongs().execute();
 
         // giving the searchview ontext change listeners, this listens for any text entered and
         // updates the query against the database.
@@ -102,6 +102,21 @@ public class SongActivity  extends ActionBarActivity {
             }
         });
 
+    }
+
+    // initialize the song list view with everything from the database.
+    private void initializeSongList() {
+        // query, returning a cursor
+        final String sqlQuery = "SELECT * FROM SONG ORDER BY SONG_NAME ASC";
+        DataBaseManager db = DataBaseManager.instance(SongActivity.this);
+        Cursor rs = db.select(sqlQuery);
+
+        // create a new custom cursor adapter, attaching the result set to the adapter.
+        adapter = new CustomCursorAdapter(this,rs);
+
+        // attach the adapter to the listview to show the results.
+        ListView listView = (ListView) findViewById(R.id.listView);
+        listView.setAdapter(adapter);
     }
 
 
@@ -181,7 +196,7 @@ public class SongActivity  extends ActionBarActivity {
     }
 
 
-    // inner class to register the user to the database
+    // inner class to insert a message to the database
     // only way to perform http requests is on a background thread.
     class InsertMessage extends AsyncTask<String, String, String> {
 
@@ -219,6 +234,89 @@ public class SongActivity  extends ActionBarActivity {
 
             // have the page attempt to process the returned json data.
             processMessageAttempt();
+
+        }
+
+    }
+
+    // inner class to compare the local database to the remote
+    // extensive process, however by saving locally we're saving the users data and making it more user friendly on future loads.
+    // could be optimized for sure. (not saying it's perfect, more or less proof of concept)
+    class CompareSongs extends AsyncTask<String, String, String> {
+
+        /**
+         * Before starting background thread Show Progress Dialog
+         * */
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            pDialog = new ProgressDialog(SongActivity.this);
+            pDialog.setMessage("Contacting the Server");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        // each time we publish an update during the task, it will adjust the message on the progress bar.
+        protected void onProgressUpdate(String...progress) {
+            pDialog.setMessage(progress[0]);
+        }
+
+
+        /**
+         * contact the website using the http handler
+         * */
+        protected String doInBackground(String... args) {
+
+            // first we'll grab a check sum from the server and tell the user what we are doing
+            myHandler = new httpHandler("http://www.tutlezone.com/dj/databaseCheckSum.php");
+            publishProgress("Server Contacted, comparing to local database");
+
+            // we'll compare that checksum to the local version
+            DataBaseManager db = DataBaseManager.instance(SongActivity.this);
+            if (db.compareToDB(myHandler.getRawData().trim())) {
+              // good to go, they match, no change necessary.
+            }
+            else {
+                // update the user, a change was identified, so we'll grab a song list.
+                publishProgress("Songs need to be updated, Getting list from server.");
+                myHandler = new httpHandler("http://www.tutlezone.com/dj/getSongs.php");
+                // parse the data into a JSON array, which in turn we loop through, inserting each obj to the db.
+                try {
+                    JSONArray jsonArr = myHandler.getJsonArray();
+                    for (int i = 0; i < jsonArr.length(); i++) {
+                        if (i % 3 == 0) {
+                            // update user along the way, 3 was an arbitrary selection.
+                            publishProgress("Songs Updating " + i + " out of " + jsonArr.length());
+                        }
+                        // parse the json object and insert it
+                        JSONObject json = jsonArr.getJSONObject(i);
+                        ContentValues values = new ContentValues();
+                        values.put(TAG_SONG_NAME, json.getString(TAG_SONG_NAME));
+                        values.put(TAG_SONG_ID, json.getLong(TAG_SONG_ID));
+                        values.put(TAG_SONG_ARTIST, json.getString(TAG_SONG_ARTIST));
+                        values.put(TAG_SONG_GENRE, json.getString(TAG_SONG_GENRE));
+                        values.put(TAG_SONG_PLAYS, json.getLong(TAG_SONG_PLAYS));
+                        db.insert("SONG", values);
+                    }
+                } catch (Exception e) {
+                    Log.e("Error", e.getMessage());
+                }
+
+            }
+
+            return null;
+        }
+
+        /**
+         * After completing the background task Dismiss the progress dialog & show a toast
+         * **/
+        protected void onPostExecute(String file_url) {
+            // after we have the song list confirmed, update the user again, and load it into a cursor adapter via initializeloadlist.
+            pDialog.setMessage("Loading your song list");
+            initializeSongList();
+            pDialog.dismiss();
+
 
         }
 

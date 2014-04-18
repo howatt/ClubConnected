@@ -18,6 +18,10 @@ import com.clubconnected.dj.Network.httpHandler;
 
 /**
  * Created by Howatt on 2/28/14.
+ * A custom cursor adapter to interface between the database and the listview displayed within the songs activity.
+ * Maps cursor results (rows) into custom layouts (activity_listview.xml), inflating each layout and placing them within the listview.
+ * Handles the re-use of layouts when necessary.
+ * ATtaches onclick with async task to each layout.
  */
 public class CustomCursorAdapter extends CursorAdapter {
 
@@ -108,7 +112,7 @@ public class CustomCursorAdapter extends CursorAdapter {
 
     }
 
-    // inner class to register the user to the database
+    // inner class to submit the song request to the server
     // only way to perform http requests is on a background thread.
     class InsertMessage extends AsyncTask<String, String, String> {
 
